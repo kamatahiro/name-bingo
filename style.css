@@ -1,0 +1,302 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary:       #4f46e5;
+  --primary-dark:  #3730a3;
+  --primary-light: #e0e7ff;
+  --bg:            #f8fafc;
+  --card-bg:       #ffffff;
+  --text:          #1e293b;
+  --text-light:    #64748b;
+  --border:        #e2e8f0;
+  --gold:          #f59e0b;
+}
+
+body {
+  font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── 画面の切り替え ── */
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 24px 16px 48px;
+}
+
+.screen.active {
+  display: block;
+}
+
+.screen-content {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ── タイトル・テキスト ── */
+.app-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-align: center;
+  margin-top: 40px;
+  letter-spacing: -0.5px;
+}
+
+.screen-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.subtitle {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.instruction {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  text-align: center;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ── カードボックス（名前登録） ── */
+.card-box {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: var(--primary);
+}
+
+/* ── ボタン ── */
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3730a3, #6d28d9);
+}
+
+.btn-secondary {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--border);
+  color: var(--text-light);
+}
+
+/* ── カード入力リスト（画面2） ── */
+#cell-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cell-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.cell-number {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.cell-input {
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.cell-input:focus {
+  border-color: var(--primary);
+}
+
+.cell-input::placeholder {
+  color: #cbd5e1;
+}
+
+/* ── プレイヤーバッジ（画面3） ── */
+.player-badge {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 16px;
+}
+
+/* ── ビンゴグリッド 3×3 ── */
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.bingo-cell {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.bingo-cell:active {
+  transform: scale(0.93);
+}
+
+.bingo-cell.marked {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-color: #4f46e5;
+  color: white;
+}
+
+.cell-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.cell-hobby {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  word-break: break-all;
+}
+
+.bingo-cell.marked .cell-hobby {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── ビンゴ数 ── */
+.bingo-count {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+/* ── ビンゴメッセージ ── */
+.bingo-message {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  border-radius: 16px;
+  padding: 20px 48px;
+  box-shadow: 0 4px 32px rgba(245, 158, 11, 0.65);
+  animation: pop 0.35s ease-out;
+}
+
+.bingo-text {
+  font-size: 2rem;
+  font-weight: 900;
+  color: white;
+  letter-spacing: 2px;
+  /* 屋外・照明下で白文字を暗色縁取りで強調 */
+  text-shadow:
+    -1px -1px 0 rgba(0, 0, 0, 0.35),
+     1px -1px 0 rgba(0, 0, 0, 0.35),
+    -1px  1px 0 rgba(0, 0, 0, 0.35),
+     1px  1px 0 rgba(0, 0, 0, 0.35),
+     0    3px 10px rgba(0, 0, 0, 0.5);
+}
+
+.bingo-message.reach {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  box-shadow: 0 4px 32px rgba(249, 115, 22, 0.65);
+}
+
+@keyframes pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.1); }
+  100% { transform: scale(1);   opacity: 1; }
+}

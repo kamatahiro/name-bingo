@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>名前ビンゴ — 幹事用</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* index.html と同じ設計変数 + 特別賞専用色 */
+    :root {
+      --primary:       #4f46e5;
+      --primary-dark:  #3730a3;
+      --primary-light: #e0e7ff;
+      --bg:            #f8fafc;
+      --card-bg:       #ffffff;
+      --text:          #1e293b;
+      --muted:         #64748b;
+      --border:        #e2e8f0;
+      --danger:        #ef4444;
+      --success:       #16a34a;
+      /* 20人目専用 */
+      --gold:          #f59e0b;
+      --gold-dark:     #d97706;
+      --orange:        #ea580c;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── 画面切り替え ── */
+    .screen { display: none; flex-direction: column; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    /* ════════════════════════════════
+       画面1: セットアップ
+       index.html の card-box スタイルに統一
+    ════════════════════════════════ */
+    #screen-setup {
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px 48px;
+    }
+
+    .setup-box {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .app-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .app-sub {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 240px;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 1.7;
+      padding: 12px 14px;
+      resize: vertical;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--primary); }
+
+    .field-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+      margin-bottom: 20px;
+    }
+
+    .error { color: var(--danger); font-size: 0.875rem; margin-bottom: 12px; }
+    .error.hidden { display: none !important; }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 14px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover  { background: var(--primary-dark); }
+    .btn-primary:active { transform: scale(0.97); }
+
+    /* ════════════════════════════════
+       画面2: 発表
+    ════════════════════════════════ */
+
+    /* ヘッダー: 上部に紫グラデーションのアクセントライン */
+    .announce-header {
+      flex-shrink: 0;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      border-top: 5px solid transparent;
+      border-image: linear-gradient(90deg, var(--primary), #7c3aed) 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+    }
+
+    .header-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.02em;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* 中央エリア */
+    .announce-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      text-align: center;
+      background: var(--bg);
+    }
+
+    /* カウンター */
+    .counter {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-bottom: 24px;
+      min-height: 4rem;
+    }
+
+    .counter-label { font-size: 1.5rem; font-weight: 700; color: var(--muted); }
+    .counter-num   { font-size: 4.5rem; font-weight: 900; color: var(--primary); line-height: 1; }
+    .counter-sub   { font-size: 1rem;   font-weight: 600; color: var(--muted); }
+
+    /* 発表中の名前：最大 7rem、プロジェクター対応 */
+    .name-display {
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 900;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      line-height: 1.15;
+      word-break: break-all;
+      /* 白カード + 紫の上ボーダーで "ステージ" 感 */
+      background: var(--card-bg);
+      border-radius: 20px;
+      border-top: 5px solid var(--primary);
+      box-shadow: 0 4px 32px rgba(79, 70, 229, 0.13);
+      padding: 36px 56px;
+      min-width: min(560px, 90vw);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .name-display.state-idle {
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: var(--muted);
+      border-top-color: var(--border);
+      box-shadow: none;
+    }
+    .name-display.state-done {
+      font-size: 2.2rem;
+      color: var(--success);
+      border-top-color: var(--success);
+    }
+
+    /* 操作ボタン */
+    .announce-controls {
+      display: flex;
+      gap: 16px;
+      margin-top: 36px;
+    }
+
+    .btn-back {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      color: var(--muted);
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 16px 28px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-back:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--muted);
+      color: var(--text);
+    }
+    .btn-back:disabled { opacity: 0.3; cursor: default; }
+
+    .btn-next {
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      border: none;
+      color: #fff;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 16px 44px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-next:hover:not(:disabled)  { opacity: 0.9; }
+    .btn-next:active:not(:disabled) { transform: scale(0.97); }
+    .btn-next:disabled {
+      background: var(--border);
+      color: var(--muted);
+      box-shadow: none;
+      cursor: default;
+      opacity: 0.5;
+    }
+
+    /* ── 発表済みリスト ── */
+    .announced-section {
+      flex-shrink: 0;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      padding: 14px 24px 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+
+    .announced-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-content: flex-start;
+    }
+
+    /* チップ: index.html の primary-light ベース */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      background: var(--primary-light);
+      border: 1.5px solid rgba(79, 70, 229, 0.2);
+      border-radius: 24px;
+      padding: 6px 16px;
+      white-space: nowrap;
+    }
+
+    .chip-num {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* ════════════════════════════════
+       特別賞オーバーレイ（20人目）
+       通常の紫世界観から一変してゴールド演出
+    ════════════════════════════════ */
+    #overlay-special {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 10, 40, 0.96);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      text-align: center;
+      padding: 32px;
+      overflow: hidden;
+      animation: overlayIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #overlay-special.hidden { display: none; }
+
+    @keyframes overlayIn {
+      from { opacity: 0; transform: scale(0.88); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .special-trophy {
+      font-size: 6rem;
+      line-height: 1;
+      margin-bottom: 20px;
+      animation: trophy-bounce 0.65s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.7));
+    }
+
+    @keyframes trophy-bounce {
+      from { transform: translateY(0)   scale(1);    }
+      to   { transform: translateY(-16px) scale(1.08); }
+    }
+
+    .special-badge {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fcd34d;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* グラデーションアニメーションで流れる金色テキスト */
+    .special-headline {
+      font-size: clamp(2.8rem, 8vw, 4.2rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, #fbbf24, #f97316, #fbbf24, #f59e0b);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gold-flow 2s linear infinite;
+    }
+
+    @keyframes gold-flow {
+      from { background-position: 0%   center; }
+      to   { background-position: 200% center; }
+    }
+
+    .special-name {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 16px;
+      word-break: break-all;
+      text-shadow: 0 0 32px rgba(251, 191, 36, 0.4);
+    }
+
+    .special-desc {
+      font-size: 1.05rem;
+      color: #d4d4d8;
+      max-width: 360px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    .btn-dismiss {
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      border: none;
+      color: #fff;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 16px 48px;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(245, 158, 11, 0.45);
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-dismiss:hover  { opacity: 0.9; }
+    .btn-dismiss:active { transform: scale(0.97); }
+
+    /* ── 紙吹雪パーティクル ── */
+    .confetti-piece {
+      position: absolute;
+      top: -20px;
+      pointer-events: none;
+      animation: confetti-fall linear forwards;
+    }
+
+    @keyframes confetti-fall {
+      0%   { transform: translateY(0)    rotate(0deg);   opacity: 1;   }
+      80%  { opacity: 1; }
+      100% { transform: translateY(105vh) rotate(800deg); opacity: 0; }
+    }
+
+    /* ── レスポンシブ（スマホ） ── */
+    @media (max-width: 600px) {
+      .name-display      { padding: 24px 28px; }
+      .btn-back          { padding: 14px 18px; font-size: 1rem; }
+      .btn-next          { padding: 14px 28px; font-size: 1rem; }
+      .announce-controls { gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ 画面1: セットアップ ══ -->
+  <div id="screen-setup" class="screen active">
+    <div class="setup-box">
+      <h1 class="app-title">名前ビンゴ — 幹事用</h1>
+      <p class="app-sub">参加者の名前を入力してシャッフル発表します</p>
+
+      <label class="field-label" for="names-input">参加者名（1行に1人）</label>
+      <textarea
+        id="names-input"
+        placeholder="山田 太郎&#10;鈴木 花子&#10;田中 次郎&#10;..."></textarea>
+      <p class="field-hint">入力順は無関係です。シャッフルして発表します。</p>
+
+      <p id="error-setup" class="error hidden">2人以上の名前を入力してください</p>
+      <button class="btn-primary" id="btn-start">シャッフルして開始 →</button>
+    </div>
+  </div>
+
+  <!-- ══ 画面2: 発表 ══ -->
+  <div id="screen-announce" class="screen">
+    <div class="announce-header">
+      <span class="header-title">幹事用 発表パネル</span>
+      <button class="btn-ghost" id="btn-restart">最初からやり直す</button>
+    </div>
+
+    <div class="announce-main">
+      <div class="counter" id="counter">
+        <span class="counter-label" style="color:var(--muted)">発表前</span>
+      </div>
+      <div class="name-display state-idle" id="name-display">↓ 最初の名前を発表</div>
+      <div class="announce-controls">
+        <button class="btn-back" id="btn-back" disabled>← 戻す</button>
+        <button class="btn-next" id="btn-next">次の名前 →</button>
+      </div>
+    </div>
+
+    <div class="announced-section" id="announced-section">
+      <div class="section-label">発表済み</div>
+      <div class="announced-list" id="announced-list">
+        <span style="font-size:0.95rem;color:var(--muted)">まだ発表していません</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 特別賞オーバーレイ（20人目） ══ -->
+  <div id="overlay-special" class="hidden">
+    <div class="special-trophy">🏆</div>
+    <p class="special-badge">第 20 人目</p>
+    <p class="special-headline">特別賞チャンス！</p>
+    <p class="special-name" id="special-name"></p>
+    <p class="special-desc">
+      この瞬間に初めてビンゴになった人が特別賞対象です。<br>
+      複数人いたらじゃんけんで決めてください！
+    </p>
+    <button class="btn-dismiss" id="btn-dismiss">確認しました — 続ける</button>
+  </div>
+
+  <script>
+    const SPECIAL_POSITION = 20;
+
+    const state = {
+      names: [],
+      current: -1,
+    };
+
+    // ── ユーティリティ ──────────────────────────────────────────
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function fisherYates(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ── 紙吹雪アニメーション ─────────────────────────────────────
+    function launchConfetti() {
+      const colors  = ['#fbbf24', '#f97316', '#4f46e5', '#ffffff', '#f59e0b', '#7c3aed', '#fcd34d'];
+      const overlay = document.getElementById('overlay-special');
+
+      for (let i = 0; i < 70; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        const size = 6 + Math.random() * 9;
+        el.style.cssText = [
+          `left: ${Math.random() * 100}%`,
+          `width: ${size}px`,
+          `height: ${size}px`,
+          `background: ${colors[Math.floor(Math.random() * colors.length)]}`,
+          `border-radius: ${Math.random() > 0.4 ? '50%' : '3px'}`,
+          `animation-delay: ${Math.random() * 1.5}s`,
+          `animation-duration: ${2.5 + Math.random() * 2}s`,
+        ].join(';');
+        overlay.appendChild(el);
+        setTimeout(() => el.remove(), 5500);
+      }
+    }
+
+    // ── セットアップ ─────────────────────────────────────────────
+    document.getElementById('btn-start').addEventListener('click', () => {
+      const raw   = document.getElementById('names-input').value;
+      const names = raw.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+      const error = document.getElementById('error-setup');
+
+      if (names.length < 2) {
+        error.classList.remove('hidden');
+        return;
+      }
+
+      error.classList.add('hidden');
+      fisherYates(names);
+      state.names   = names;
+      state.current = -1;
+      render();
+      showScreen('screen-announce');
+    });
+
+    // ── 次の名前 ─────────────────────────────────────────────────
+    document.getElementById('btn-next').addEventListener('click', () => {
+      if (state.current >= state.names.length) return;
+      state.current++;
+      render();
+
+      if (state.current === SPECIAL_POSITION - 1) {
+        document.getElementById('special-name').textContent =
+          state.names[state.current];
+        document.getElementById('overlay-special').classList.remove('hidden');
+        launchConfetti();
+      }
+    });
+
+    // ── 戻す ─────────────────────────────────────────────────────
+    document.getElementById('btn-back').addEventListener('click', () => {
+      if (state.current < 0) return;
+      state.current--;
+      render();
+    });
+
+    // ── 最初からやり直す ─────────────────────────────────────────
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      showScreen('screen-setup');
+    });
+
+    // ── 特別賞オーバーレイを閉じる ───────────────────────────────
+    document.getElementById('btn-dismiss').addEventListener('click', () => {
+      document.getElementById('overlay-special').classList.add('hidden');
+      document.querySelectorAll('.confetti-piece').forEach(el => el.remove());
+    });
+
+    // ── 画面更新 ─────────────────────────────────────────────────
+    function render() {
+      const total = state.names.length;
+      const cur   = state.current;
+
+      const counterEl = document.getElementById('counter');
+      const nameEl    = document.getElementById('name-display');
+      const btnBack   = document.getElementById('btn-back');
+      const btnNext   = document.getElementById('btn-next');
+
+      if (cur < 0) {
+        counterEl.innerHTML =
+          `<span class="counter-label">発表前</span>` +
+          `<span class="counter-sub">&nbsp;/ 全${total}人</span>`;
+        nameEl.textContent = '↓ 最初の名前を発表';
+        nameEl.className = 'name-display state-idle';
+      } else if (cur >= total) {
+        counterEl.innerHTML =
+          `<span class="counter-label" style="color:var(--success)">全${total}人 発表完了</span>`;
+        nameEl.textContent = '全員発表しました！';
+        nameEl.className = 'name-display state-done';
+      } else {
+        counterEl.innerHTML =
+          `<span class="counter-label">第&nbsp;</span>` +
+          `<span class="counter-num">${cur + 1}</span>` +
+          `<span class="counter-label">&nbsp;人目</span>` +
+          `<span class="counter-sub">&nbsp;/ 全${total}人</span>`;
+        nameEl.textContent = state.names[cur];
+        nameEl.className = 'name-display';
+      }
+
+      btnBack.disabled = cur < 0;
+      btnNext.disabled = cur >= total;
+      if (!btnNext.disabled) {
+        btnNext.textContent = cur < 0 ? '最初の名前 →' : '次の名前 →';
+      }
+
+      const section = document.getElementById('announced-section');
+      const listEl  = document.getElementById('announced-list');
+      const shown   = cur + 1;
+
+      if (shown <= 0) {
+        listEl.innerHTML =
+          '<span style="font-size:0.95rem;color:var(--muted)">まだ発表していません</span>';
+      } else {
+        listEl.innerHTML = state.names.slice(0, shown).map((name, i) =>
+          `<span class="chip">` +
+            `<span class="chip-num">${i + 1}.</span>` +
+            `${escapeHtml(name)}` +
+          `</span>`
+        ).join('');
+        section.scrollTop = section.scrollHeight;
+      }
+    }
+  </script>
+</body>
+</html>

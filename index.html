@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>名前ビンゴ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 画面1: 名前登録 -->
+  <div id="screen-register" class="screen active">
+    <div class="screen-content">
+      <h1 class="app-title">名前ビンゴ</h1>
+      <p class="subtitle">同窓会・交流イベント用</p>
+      <div class="card-box">
+        <label class="label" for="player-name">あなたの名前</label>
+        <input
+          type="text"
+          id="player-name"
+          class="input"
+          placeholder="例: 山田 太郎"
+          maxlength="20"
+        >
+        <p id="error-register" class="error hidden">名前を入力してください</p>
+      </div>
+      <button id="btn-to-card" class="btn btn-primary">カードを作る →</button>
+    </div>
+  </div>
+
+  <!-- 画面2: カード入力 -->
+  <div id="screen-input" class="screen">
+    <div class="screen-content">
+      <h2 class="screen-title">ビンゴカードを作ろう</h2>
+      <p class="subtitle" id="input-subtitle"></p>
+      <div id="cell-list"></div>
+      <p id="error-input" class="error hidden">全てのマスに名前を入力してください</p>
+      <button id="btn-to-game" class="btn btn-primary">ゲームを始める →</button>
+    </div>
+  </div>
+
+  <!-- 画面3: ゲーム -->
+  <div id="screen-game" class="screen">
+    <div class="screen-content">
+      <div class="player-badge" id="player-badge"></div>
+      <p class="instruction">名前が呼ばれたらマスをタップ！</p>
+      <div id="bingo-card" class="bingo-grid"></div>
+      <div id="bingo-count" class="bingo-count">ビンゴ: 0 列</div>
+      <div id="bingo-message" class="bingo-message hidden">
+        <span class="bingo-text">BINGO!</span>
+      </div>
+      <button id="btn-reset" class="btn btn-secondary">最初からやり直す</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
